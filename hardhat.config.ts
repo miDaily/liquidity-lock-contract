@@ -9,6 +9,7 @@ import "solidity-coverage";
 import "hardhat-deploy";
 import "@nomiclabs/hardhat-ethers";
 import "hardhat-deploy-ethers";
+import { node_url, accounts } from "./utils/network";
 
 dotenv.config();
 
@@ -28,14 +29,32 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 const config: HardhatUserConfig = {
   solidity: "0.8.4",
   networks: {
-    ropsten: {
-      url: process.env.ROPSTEN_URL || "",
-      accounts:
-        process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
+    hardhat: {
+      accounts: accounts(),
+      initialBaseFeePerGas: 0, // workaround from https://github.com/sc-forks/solidity-coverage/issues/652#issuecomment-896330136 . Remove when that issue is closed.
+      deploy: ["deploy/hardhat/v1", "deploy/polygon/v1"],
+      tags: ["test", "local"],
+    },
+    mumbai: {
+      url: node_url("mumbai"),
+      accounts: accounts("mumbai"),
+      deploy: ["deploy/polygon/v1"],
+      tags: ["staging"],
+    },
+    polygon: {
+      url: node_url("polygon"),
+      accounts: accounts("polygon"),
+      deploy: ["deploy/polygon/v1"],
+      tags: ["production"],
     },
   },
   namedAccounts: {
-    UniswapV2Factory: {},
+    deployer: 0,
+    UniswapV2Factory: {
+      default: "",
+      mumbai: "",
+      polygon: "",
+    },
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,

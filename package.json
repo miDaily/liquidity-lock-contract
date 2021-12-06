@@ -1,5 +1,14 @@
 {
   "name": "hardhat-project",
+  "license": "MIT",
+  "scripts": {
+    "hh-compile": "hardhat compile",
+    "prettier": "prettier --write 'contracts/**/*.sol'",
+    "hh-node": "hardhat node --show-accounts",
+    "hh-test": "hardhat test",
+    "hh-deploy": "hardhat deploy",
+    "hh-deploy-network": "hardhat deploy --network"
+  },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers",
     "@nomiclabs/hardhat-etherscan": "^2.1.8",
