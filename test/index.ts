@@ -1,19 +1,12 @@
 import { expect } from "chai";
-import { ethers } from "hardhat";
+import { ethers, deployments } from "hardhat";
 
 describe("Greeter", function () {
-  it("Should return the new greeting once it's changed", async function () {
-    const Greeter = await ethers.getContractFactory("Greeter");
-    const greeter = await Greeter.deploy("Hello, world!");
-    await greeter.deployed();
-
-    expect(await greeter.greet()).to.equal("Hello, world!");
-
-    const setGreetingTx = await greeter.setGreeting("Hola, mundo!");
-
-    // wait until the transaction is mined
-    await setGreetingTx.wait();
-
-    expect(await greeter.greet()).to.equal("Hola, mundo!");
+  beforeEach(async () => {
+    // Make sure every test is started from a clean deployment fixture
+    await deployments.fixture(["UniswapV2Factory", "ERC20Mock"]);
+    const factoryContract = await ethers.getContract("UniswapV2Factory");
+    console.log("Factory ethers address", factoryContract.address);
   });
+  it("Should return the new greeting once it's changed", async function () {});
 });

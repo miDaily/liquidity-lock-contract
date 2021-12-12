@@ -1,25 +1,44 @@
 //SPDX-License-Identifier: Unlicense
-pragma solidity ^0.8.0;
+pragma solidity ^0.6.6;
 
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
+
+//import "@uniswap/v2-periphery/contracts/libraries/UniswapV2Library.sol";
+//import "@uniswap/v2-core/contracts/interfaces/IUniswapV2Pair.sol";
 
 contract LiquidityLock {
-  IERC20 public token;
+  using SafeMath for uint256;
 
-  constructor(IERC20 _token) {
-    token = _token;
+  address public factory;
+
+  constructor(address _factory) public {
+    factory = _factory;
   }
 
   function addLiquidity(
-    IERC20 _pairToken,
-    uint256 _amount,
-    uint256 _locktime
+    IERC20 tokenA,
+    IERC20 tokenB,
+    uint256 amountA,
+    uint256 amountB,
+    uint256 locktime
   ) public {
     require(
-      _pairToken.allowance(msg.sender, address(this)) >= _amount,
+      tokenA.allowance(msg.sender, address(this)) >= amountA,
       "Amount not approved"
     );
+    require(
+      tokenB.allowance(msg.sender, address(this)) >= amountB,
+      "Amount not approved"
+    );
+
+    tokenA.transferFrom(msg.sender, address(this), amountA);
+    tokenB.transferFrom(msg.sender, address(this), amountB);
+
+    /*IUniswapV2Pair pair = IUniswapV2Pair(
+      UniswapV2Library.pairFor(factory, address(tokenA), address(tokenB))
+    );*/
   }
 
   function removeLiquidity(IERC20 _pairToken, uint256 _amount) public {

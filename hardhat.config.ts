@@ -8,7 +8,6 @@ import "hardhat-gas-reporter";
 import "solidity-coverage";
 import "hardhat-deploy";
 import "@nomiclabs/hardhat-ethers";
-import "hardhat-deploy-ethers";
 import { node_url, accounts } from "./utils/network";
 
 dotenv.config();
@@ -27,7 +26,7 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 // Go to https://hardhat.org/config/ to learn more
 
 const config: HardhatUserConfig = {
-  solidity: "0.8.4",
+  solidity: "0.6.6",
   networks: {
     hardhat: {
       accounts: accounts(),
@@ -51,8 +50,12 @@ const config: HardhatUserConfig = {
   namedAccounts: {
     deployer: 0,
     UniswapV2Factory: {
-      default: "",
-      mumbai: "",
+      polygon: "",
+    },
+    DailyCOP: {
+      polygon: "",
+    },
+    Tether: {
       polygon: "",
     },
   },
