@@ -26,7 +26,7 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 // Go to https://hardhat.org/config/ to learn more
 
 const config: HardhatUserConfig = {
-  solidity: "0.6.6",
+  solidity: "0.8.4",
   networks: {
     hardhat: {
       accounts: accounts(),
@@ -35,6 +35,7 @@ const config: HardhatUserConfig = {
       tags: ["test", "local"],
     },
     mumbai: {
+      chainId: 80001,
       url: node_url("mumbai"),
       accounts: accounts("mumbai"),
       deploy: ["deploy/polygon/v1"],
@@ -49,8 +50,13 @@ const config: HardhatUserConfig = {
   },
   namedAccounts: {
     deployer: 0,
+    liquidityProvider1: 1,
+    liquidityProvider2: 2,
     UniswapV2Factory: {
       polygon: "",
+    },
+    UniswapV2Router: {
+      polygon: "0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff",
     },
     DailyCOP: {
       polygon: "",
@@ -64,7 +70,7 @@ const config: HardhatUserConfig = {
     currency: "USD",
   },
   etherscan: {
-    apiKey: process.env.ETHERSCAN_API_KEY,
+    apiKey: process.env.POLYGONSCAN_API_KEY,
   },
 };
 
