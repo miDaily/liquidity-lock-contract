@@ -1,31 +1,30 @@
 import {
-  bytecode as UniswapV2FactoryBytecode,
-  abi as UniswapV2FactoryAbi,
-} from "@uniswap/v2-core/build/UniswapV2Factory.json";
+  bytecode as UniswapV2Router02Bytecode,
+  abi as UniswapV2Router02Abi,
+} from "@uniswap/v2-periphery/build/UniswapV2Router02.json";
 import { ethers } from "hardhat";
 import { DeployFunction } from "hardhat-deploy/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
-const contractName = "UniswapV2Factory";
+const contractName = "UniswapV2Router02";
 const version = "v2";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   const { deployments, getNamedAccounts } = hre;
   const { deploy } = deployments;
   const { deployer } = await getNamedAccounts();
+  const factoryContract = await ethers.getContract("UniswapV2Factory");
+  const wrappedEtherContract = await ethers.getContract("WETHMock");
 
-  const deployment = await deploy(contractName, {
+  await deploy(contractName, {
     from: deployer,
     log: true,
     contract: {
-      abi: UniswapV2FactoryAbi,
-      bytecode: UniswapV2FactoryBytecode,
+      abi: UniswapV2Router02Abi,
+      bytecode: UniswapV2Router02Bytecode,
     },
-    args: [deployer],
+    args: [factoryContract.address, wrappedEtherContract.address],
   });
-
-  console.log("Factory address", deployment.address);
-  console.log("Factory abi", deployment.abi);
 };
 
 export default func;

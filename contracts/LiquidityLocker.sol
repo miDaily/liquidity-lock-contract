@@ -44,8 +44,8 @@ contract LiquidityLocker {
     _;
   }
 
-  constructor(address _router) {
-    router = IUniswapV2Router(_router);
+  constructor(IUniswapV2Router _router) {
+    router = _router;
   }
 
   function addAndLockLiquidity(
