@@ -17,7 +17,7 @@ const func: DeployFunction = async function ({
   await deploy(contractName, {
     from: deployer,
     log: true,
-    args: [deployer, routerContract.address],
+    args: [routerContract.address],
   });
 };
 

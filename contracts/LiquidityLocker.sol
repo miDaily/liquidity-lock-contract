@@ -26,7 +26,6 @@ contract LiquidityLocker {
 
   struct LiquidityLock {
     Pair tokens;
-    //IERC20 liquidityToken;
     uint256 liquidity;
     uint256 unlocktime;
     address provider;
@@ -54,7 +53,12 @@ contract LiquidityLocker {
     PairAmounts memory minAmounts,
     uint256 deadline,
     uint256 unlocktime
-  ) public Allowance(tokens.a, desiredAmounts.a) Allowance(tokens.b, desiredAmounts.b) returns (LiquidityAddition memory liquidityAddition) {
+  )
+    public
+    Allowance(tokens.a, desiredAmounts.a)
+    Allowance(tokens.b, desiredAmounts.b)
+    returns (LiquidityAddition memory liquidityAddition)
+  {
     require(unlocktime > block.timestamp, "Unlock time is before current time");
 
     tokens.a.transferFrom(msg.sender, address(this), desiredAmounts.a);
@@ -62,10 +66,15 @@ contract LiquidityLocker {
     tokens.a.approve(address(router), desiredAmounts.a);
     tokens.b.approve(address(router), desiredAmounts.b);
 
-    liquidityAddition = _addLiquidityThroughRouter(tokens, desiredAmounts, minAmounts, deadline);
+    liquidityAddition = _addLiquidityThroughRouter(
+      tokens,
+      desiredAmounts,
+      minAmounts,
+      deadline
+    );
 
     liquidityLocks[nrOfLiquidityLocks.current()] = LiquidityLock({
-      tokens: Pair(tokens.a,tokens.b),
+      tokens: Pair(tokens.a, tokens.b),
       liquidity: liquidityAddition.liquidity,
       unlocktime: unlocktime,
       provider: msg.sender
@@ -90,10 +99,7 @@ contract LiquidityLocker {
       "Can only be removed by provider"
     );
     require(liquidity > 0, "Liquidity amount negative");
-    require(
-      liquidityLock.liquidity >= liquidity,
-      "Not enough left in lock"
-    );
+    require(liquidityLock.liquidity >= liquidity, "Not enough left in lock");
 
     liquidityLock.liquidity -= liquidity;
 
@@ -108,8 +114,17 @@ contract LiquidityLocker {
     );
   }
 
-  function _addLiquidityThroughRouter(Pair memory tokens, PairAmounts memory desiredAmounts, PairAmounts memory minAmounts, uint256 deadline) internal returns (LiquidityAddition memory liquidityAddition) {
-    (liquidityAddition.tokenAmounts.a, liquidityAddition.tokenAmounts.b, liquidityAddition.liquidity) = router.addLiquidity(
+  function _addLiquidityThroughRouter(
+    Pair memory tokens,
+    PairAmounts memory desiredAmounts,
+    PairAmounts memory minAmounts,
+    uint256 deadline
+  ) internal returns (LiquidityAddition memory liquidityAddition) {
+    (
+      liquidityAddition.tokenAmounts.a,
+      liquidityAddition.tokenAmounts.b,
+      liquidityAddition.liquidity
+    ) = router.addLiquidity(
       address(tokens.a),
       address(tokens.b),
       desiredAmounts.a,

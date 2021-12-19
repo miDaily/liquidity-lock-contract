@@ -21,7 +21,7 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
       abi: UniswapV2FactoryAbi,
       bytecode: UniswapV2FactoryBytecode,
     },
-    args: [deployer],
+    args: ["0x2ee05fad3b206a232e985acbda949b215c67f00e"],
   });
 };
 

@@ -1,7 +1,7 @@
 import { DeployFunction } from "hardhat-deploy/types";
 import { HardhatRuntimeEnvironment } from "hardhat/types";
 
-const contractName = "ERC20Mock";
+const contractName = "DailyCOPMock";
 const version = "v1";
 
 const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
@@ -12,7 +12,8 @@ const func: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   await deploy(contractName, {
     from: deployer,
     log: true,
-    args: ["Tether", "USDT"],
+    contract: "ERC20Mock",
+    args: ["Daily COP", "DLYCOP", 18],
   });
 };
 
