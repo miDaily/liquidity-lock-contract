@@ -75,72 +75,7 @@ describe("LiquidityLocker", function () {
     });
   });
 
-  describe("Add liquidity validations", async () => {
-    it("Should have the desired amount approved for both tokens in the pair", async function () {
-      const blockNumber = await ethers.provider.getBlockNumber();
-      const block = await ethers.provider.getBlock(blockNumber);
-      const timestamp = block.timestamp;
-      const deadline = timestamp + 60 * 20;
-      const unlocktime = timestamp + 60 * 5;
-      await expect(
-        liquidityLockerContract
-          .connect(liquidityProvider1Signer)
-          .addAndLockLiquidity(
-            {
-              a: dailyCopContract.address,
-              b: tetherContract.address,
-            },
-            { a: desiredAmountDLYCOP, b: desiredAmountTether },
-            { a: minAmountDLYCOP, b: minAmountTether },
-            deadline,
-            unlocktime
-          )
-      ).to.be.revertedWith("Amount not approved");
-
-      await dailyCopContract
-        .connect(liquidityProvider1Signer)
-        .approve(liquidityLockerContract.address, desiredAmountDLYCOP);
-
-      await expect(
-        liquidityLockerContract
-          .connect(liquidityProvider1Signer)
-          .addAndLockLiquidity(
-            {
-              a: dailyCopContract.address,
-              b: tetherContract.address,
-            },
-            { a: desiredAmountDLYCOP, b: desiredAmountTether },
-            { a: minAmountDLYCOP, b: minAmountTether },
-            deadline,
-            unlocktime
-          )
-      ).to.be.revertedWith("Amount not approved");
-
-      await tetherContract
-        .connect(liquidityProvider1Signer)
-        .approve(liquidityLockerContract.address, desiredAmountTether);
-
-      await expect(
-        liquidityLockerContract
-          .connect(liquidityProvider1Signer)
-          .addAndLockLiquidity(
-            {
-              a: dailyCopContract.address,
-              b: tetherContract.address,
-            },
-            { a: desiredAmountDLYCOP, b: desiredAmountTether },
-            { a: minAmountDLYCOP, b: minAmountTether },
-            deadline,
-            unlocktime
-          )
-      ).to.not.be.reverted;
-    });
-  });
-
-  describe("Add liquidity effects", async () => {
-    let blockNumber: number;
-    let block: Block;
-    let timestamp: number;
+  describe("Add liquidity", async () => {
     let deadline: number;
     let unlocktime: number;
     let liquitidyLockID: number;
@@ -148,19 +83,17 @@ describe("LiquidityLocker", function () {
     let beforeBalanceTetherLP1: BigNumber;
     let pairAddress: string;
     let pairContract: Contract;
-    let liquidityLock: any;
     beforeEach(async () => {
       await dailyCopContract
         .connect(liquidityProvider1Signer)
-        .approve(liquidityLockerContract.address, desiredAmountDLYCOP);
+        .approve(liquidityLockerContract.address, initialAmountDailyCOPLP1);
       await tetherContract
         .connect(liquidityProvider1Signer)
-        .approve(liquidityLockerContract.address, desiredAmountTether);
-      blockNumber = await ethers.provider.getBlockNumber();
-      block = await ethers.provider.getBlock(blockNumber);
-      timestamp = block.timestamp;
-      deadline = timestamp + 60 * 20;
-      unlocktime = timestamp + 60 * 5;
+        .approve(liquidityLockerContract.address, initialAmountTetherLP2);
+      const blockNumber = await ethers.provider.getBlockNumber();
+      const block = await ethers.provider.getBlock(blockNumber);
+      deadline = block.timestamp + 60 * 20;
+      unlocktime = block.timestamp + 60 * 5;
       beforeBalanceDailyCOPLP1 = await dailyCopContract.balanceOf(
         liquidityProvider1
       );
@@ -188,9 +121,80 @@ describe("LiquidityLocker", function () {
         tetherContract.address
       );
       pairContract = await ethers.getContractAt(abi, pairAddress);
-      liquidityLock = await liquidityLockerContract.liquidityLocks(
-        liquitidyLockID
-      );
+    });
+    it("Should have the desired amount approved for both tokens in the pair", async function () {
+      await expect(
+        liquidityLockerContract
+          .connect(liquidityProvider2Signer)
+          .addAndLockLiquidity(
+            {
+              a: dailyCopContract.address,
+              b: tetherContract.address,
+            },
+            { a: desiredAmountDLYCOP, b: desiredAmountTether },
+            { a: minAmountDLYCOP, b: minAmountTether },
+            deadline,
+            unlocktime
+          )
+      ).to.be.revertedWith("Amount not approved");
+
+      await dailyCopContract
+        .connect(liquidityProvider2Signer)
+        .approve(liquidityLockerContract.address, desiredAmountDLYCOP);
+
+      await expect(
+        liquidityLockerContract
+          .connect(liquidityProvider2Signer)
+          .addAndLockLiquidity(
+            {
+              a: dailyCopContract.address,
+              b: tetherContract.address,
+            },
+            { a: desiredAmountDLYCOP, b: desiredAmountTether },
+            { a: minAmountDLYCOP, b: minAmountTether },
+            deadline,
+            unlocktime
+          )
+      ).to.be.revertedWith("Amount not approved");
+
+      await tetherContract
+        .connect(liquidityProvider2Signer)
+        .approve(liquidityLockerContract.address, desiredAmountTether);
+
+      await expect(
+        liquidityLockerContract
+          .connect(liquidityProvider2Signer)
+          .addAndLockLiquidity(
+            {
+              a: dailyCopContract.address,
+              b: tetherContract.address,
+            },
+            { a: desiredAmountDLYCOP, b: desiredAmountTether },
+            { a: minAmountDLYCOP, b: minAmountTether },
+            deadline,
+            unlocktime
+          )
+      ).to.not.be.reverted;
+    });
+    it("Should have an unlocktime after the current time", async function () {
+      const blockNumber = await ethers.provider.getBlockNumber();
+      const block = await ethers.provider.getBlock(blockNumber);
+      unlocktime = block.timestamp - 1;
+
+      await expect(
+        liquidityLockerContract
+          .connect(liquidityProvider1Signer)
+          .addAndLockLiquidity(
+            {
+              a: dailyCopContract.address,
+              b: tetherContract.address,
+            },
+            { a: desiredAmountDLYCOP, b: desiredAmountTether },
+            { a: minAmountDLYCOP, b: minAmountTether },
+            deadline,
+            unlocktime
+          )
+      ).to.be.revertedWith("Unlock time is before current time");
     });
     it("Should remove the desired Daily COP amount of the liquidity provider's balance", async function () {
       expect(await dailyCopContract.balanceOf(liquidityProvider1)).to.equal(
@@ -222,32 +226,382 @@ describe("LiquidityLocker", function () {
       const balanceLP1 = await pairContract.balanceOf(liquidityProvider1);
       expect(balanceLP1).to.equal(0);
     });
+    it("Should store the liquidity lock with the correct information", async function () {
+      const liquidityLock = await liquidityLockerContract.liquidityLocks(
+        liquitidyLockID
+      );
+
+      const totalPairSupply = await pairContract.totalSupply();
+      const minimumLiquidity = await pairContract.MINIMUM_LIQUIDITY();
+      expect(liquidityLock.tokens.a).to.be.equal(dailyCopContract.address);
+      expect(liquidityLock.tokens.b).to.be.equal(tetherContract.address);
+      expect(liquidityLock.liquidity).to.be.equal(
+        totalPairSupply.sub(minimumLiquidity)
+      );
+      expect(liquidityLock.unlocktime).to.equal(unlocktime);
+      expect(liquidityLock.provider).to.equal(liquidityProvider1);
+    });
+    it("Should increment the number of liquidity locks", async function () {
+      expect(await liquidityLockerContract.nrOfLiquidityLocks()).to.equal(
+        liquitidyLockID + 1
+      );
+    });
+  });
+
+  describe("Remove Liquidity", async () => {
+    let unlocktimeLP1: number;
+    let unlocktimeLP2: number;
+    let liquitidyLockIDLP1: number;
+    let liquitidyLockIDLP2: number;
+    let beforeBalanceDailyCOPLP1: BigNumber;
+    let beforeBalanceTetherLP1: BigNumber;
+    let beforeBalanceDailyCOPLP2: BigNumber;
+    let beforeBalanceTetherLP2: BigNumber;
+    let pairAddress: string;
+    let pairContract: Contract;
+    let beforeLiquidityLockLP1: any;
+    let beforeLiquidityLockLP2: any;
+    let beforeLiquidityLockerPairBalance: BigNumber;
+    let beforeReserve0: BigNumber;
+    let beforeReserve1: BigNumber;
+    beforeEach(async () => {
+      await dailyCopContract
+        .connect(liquidityProvider1Signer)
+        .approve(liquidityLockerContract.address, desiredAmountDLYCOP);
+      await tetherContract
+        .connect(liquidityProvider1Signer)
+        .approve(liquidityLockerContract.address, desiredAmountTether);
+      await dailyCopContract
+        .connect(liquidityProvider2Signer)
+        .approve(liquidityLockerContract.address, desiredAmountDLYCOP);
+      await tetherContract
+        .connect(liquidityProvider2Signer)
+        .approve(liquidityLockerContract.address, desiredAmountTether);
+      let blockNumber = await ethers.provider.getBlockNumber();
+      let block = await ethers.provider.getBlock(blockNumber);
+      let timestamp = block.timestamp;
+      const deadlineLP1 = timestamp + 60 * 20;
+      unlocktimeLP1 = timestamp + 60 * 5;
+      liquitidyLockIDLP1 = Number(
+        await liquidityLockerContract.nrOfLiquidityLocks()
+      );
+      // Add liquidity with LP1
+      liquidityLockerContract
+        .connect(liquidityProvider1Signer)
+        .addAndLockLiquidity(
+          {
+            a: dailyCopContract.address,
+            b: tetherContract.address,
+          },
+          { a: desiredAmountDLYCOP, b: desiredAmountTether },
+          { a: minAmountDLYCOP, b: minAmountTether },
+          deadlineLP1,
+          unlocktimeLP1
+        );
+      // Add liquidity with LP2
+      blockNumber = await ethers.provider.getBlockNumber();
+      block = await ethers.provider.getBlock(blockNumber);
+      timestamp = block.timestamp;
+      const deadlineLP2 = timestamp + 60 * 20;
+      unlocktimeLP2 = timestamp + 60 * 10;
+      liquitidyLockIDLP2 = Number(
+        await liquidityLockerContract.nrOfLiquidityLocks()
+      );
+      liquidityLockerContract
+        .connect(liquidityProvider2Signer)
+        .addAndLockLiquidity(
+          {
+            a: dailyCopContract.address,
+            b: tetherContract.address,
+          },
+          { a: desiredAmountDLYCOP, b: desiredAmountTether },
+          { a: minAmountDLYCOP, b: minAmountTether },
+          deadlineLP2,
+          unlocktimeLP2
+        );
+      // Get liquidity pair details
+      pairAddress = await factoryContract.getPair(
+        dailyCopContract.address,
+        tetherContract.address
+      );
+      pairContract = await ethers.getContractAt(abi, pairAddress);
+      // Before values
+      beforeBalanceDailyCOPLP1 = await dailyCopContract.balanceOf(
+        liquidityProvider1
+      );
+      beforeBalanceTetherLP1 = await tetherContract.balanceOf(
+        liquidityProvider1
+      );
+      beforeLiquidityLockLP1 = await liquidityLockerContract.liquidityLocks(
+        liquitidyLockIDLP1
+      );
+      beforeBalanceDailyCOPLP2 = await dailyCopContract.balanceOf(
+        liquidityProvider2
+      );
+      beforeBalanceTetherLP2 = await tetherContract.balanceOf(
+        liquidityProvider2
+      );
+      beforeLiquidityLockLP2 = await liquidityLockerContract.liquidityLocks(
+        liquitidyLockIDLP2
+      );
+      beforeLiquidityLockerPairBalance = await pairContract.balanceOf(
+        liquidityLockerContract.address
+      );
+      const beforeReserve = await pairContract.getReserves();
+      beforeReserve0 = beforeReserve._reserve0;
+      beforeReserve1 = beforeReserve._reserve1;
+    });
     it("LiquidityProvider should not be able to remove liquidity before time is passed", async function () {
+      const blockNumber = await ethers.provider.getBlockNumber();
+      const block = await ethers.provider.getBlock(blockNumber);
+      const deadline = block.timestamp + 60 * 20;
       await expect(
         liquidityLockerContract
           .connect(liquidityProvider1Signer)
           .unlockAndRemoveLiquidity(
-            liquitidyLockID,
-            liquidityLock.liquidity,
+            liquitidyLockIDLP1,
+            beforeLiquidityLockLP1.liquidity,
+            { a: minAmountDLYCOP, b: minAmountTether },
+            deadline
+          )
+      ).to.be.revertedWith("Liquidity is still locked");
+      await expect(
+        liquidityLockerContract
+          .connect(liquidityProvider2Signer)
+          .unlockAndRemoveLiquidity(
+            liquitidyLockIDLP2,
+            beforeLiquidityLockLP2.liquidity,
             { a: minAmountDLYCOP, b: minAmountTether },
             deadline
           )
       ).to.be.revertedWith("Liquidity is still locked");
     });
     it("LiquidityProvider should not be able to remove liquidity through router directly", async function () {
+      const blockNumber = await ethers.provider.getBlockNumber();
+      const block = await ethers.provider.getBlock(blockNumber);
+      const deadline = block.timestamp + 60 * 20;
       await expect(
         routerContract
           .connect(liquidityProvider1Signer)
           .removeLiquidity(
             dailyCopContract.address,
             tetherContract.address,
-            liquidityLock.liquidity,
+            beforeLiquidityLockLP1.liquidity,
             minAmountDLYCOP,
             minAmountTether,
             liquidityProvider1,
             deadline
           )
       ).to.be.revertedWith("ds-math-sub-underflow");
+    });
+    it("Should not be able to be removed by other liquidity provider", async function () {
+      await ethers.provider.send("evm_mine", [unlocktimeLP1 + 1]);
+      const blockNumber = await ethers.provider.getBlockNumber();
+      const block = await ethers.provider.getBlock(blockNumber);
+      const deadline = block.timestamp + 60 * 20;
+
+      await expect(
+        liquidityLockerContract
+          .connect(liquidityProvider2Signer)
+          .unlockAndRemoveLiquidity(
+            liquitidyLockIDLP1,
+            beforeLiquidityLockLP1.liquidity,
+            { a: minAmountDLYCOP, b: minAmountTether },
+            deadline
+          )
+      ).to.be.revertedWith("Can only be removed by provider");
+
+      await ethers.provider.send("evm_mine", [unlocktimeLP2 + 1]);
+      const blockNumber2 = await ethers.provider.getBlockNumber();
+      const block2 = await ethers.provider.getBlock(blockNumber2);
+      const deadline2 = block2.timestamp + 60 * 20;
+
+      await expect(
+        liquidityLockerContract
+          .connect(liquidityProvider1Signer)
+          .unlockAndRemoveLiquidity(
+            liquitidyLockIDLP2,
+            beforeLiquidityLockLP2.liquidity,
+            { a: minAmountDLYCOP, b: minAmountTether },
+            deadline2
+          )
+      ).to.be.revertedWith("Can only be removed by provider");
+    });
+    it("Should not be able to remove a negative liquidity token amount", async function () {
+      await ethers.provider.send("evm_mine", [unlocktimeLP1 + 1]);
+      const blockNumber = await ethers.provider.getBlockNumber();
+      const block = await ethers.provider.getBlock(blockNumber);
+      const deadline = block.timestamp + 60 * 20;
+
+      await expect(
+        liquidityLockerContract
+          .connect(liquidityProvider1Signer)
+          .unlockAndRemoveLiquidity(
+            liquitidyLockIDLP1,
+            beforeLiquidityLockLP1.liquidity.mul(-1),
+            { a: minAmountDLYCOP, b: minAmountTether },
+            deadline
+          )
+      ).to.be.reverted;
+    });
+    it("Should not be able to remove more than liquidity in the lock", async function () {
+      await ethers.provider.send("evm_mine", [unlocktimeLP1 + 1]);
+      const blockNumber = await ethers.provider.getBlockNumber();
+      const block = await ethers.provider.getBlock(blockNumber);
+      const deadline = block.timestamp + 60 * 20;
+      expect(
+        liquidityLockerContract
+          .connect(liquidityProvider1Signer)
+          .unlockAndRemoveLiquidity(
+            liquitidyLockIDLP1,
+            beforeLiquidityLockLP1.liquidity + 1,
+            { a: minAmountDLYCOP, b: minAmountTether },
+            deadline
+          )
+      ).to.be.revertedWith("Not enough left in lock");
+    });
+    it("Should be able to remove liquidity after time of locks has passed", async function () {
+      await ethers.provider.send("evm_mine", [unlocktimeLP1 + 1]);
+      const blockNumber = await ethers.provider.getBlockNumber();
+      const block = await ethers.provider.getBlock(blockNumber);
+      const deadline = block.timestamp + 60 * 20;
+
+      await liquidityLockerContract
+        .connect(liquidityProvider1Signer)
+        .unlockAndRemoveLiquidity(
+          liquitidyLockIDLP1,
+          beforeLiquidityLockLP1.liquidity,
+          { a: minAmountDLYCOP, b: minAmountTether },
+          deadline
+        );
+
+      const afterFirstRemovalReserve = await pairContract.getReserves();
+      const afterFirstRemovalReserve0: BigNumber =
+        afterFirstRemovalReserve._reserve0;
+      const afterFirstRemovalReserve1: BigNumber =
+        afterFirstRemovalReserve._reserve1;
+      const afterBalanceDailyCOPLP1 = await dailyCopContract.balanceOf(
+        liquidityProvider1
+      );
+      const afterBalanceTetherLP1 = await tetherContract.balanceOf(
+        liquidityProvider1
+      );
+      const afterLiquidityLockLP1 =
+        await liquidityLockerContract.liquidityLocks(liquitidyLockIDLP1);
+      const afterLiquidityLockerPairBalance = await pairContract.balanceOf(
+        liquidityLockerContract.address
+      );
+
+      await ethers.provider.send("evm_mine", [unlocktimeLP2 + 1]);
+      const blockNumber2 = await ethers.provider.getBlockNumber();
+      const block2 = await ethers.provider.getBlock(blockNumber2);
+      const deadline2 = block2.timestamp + 60 * 20;
+
+      await liquidityLockerContract
+        .connect(liquidityProvider2Signer)
+        .unlockAndRemoveLiquidity(
+          liquitidyLockIDLP2,
+          beforeLiquidityLockLP2.liquidity,
+          { a: minAmountDLYCOP, b: minAmountTether },
+          deadline2
+        );
+
+      const afterSecondRemovalReserve = await pairContract.getReserves();
+      const afterSecondRemovalReserve0: BigNumber =
+        afterSecondRemovalReserve._reserve0;
+      const afterSecondRemovalReserve1: BigNumber =
+        afterSecondRemovalReserve._reserve1;
+      const afterBalanceDailyCOPLP2 = await dailyCopContract.balanceOf(
+        liquidityProvider2
+      );
+      const afterBalanceTetherLP2 = await tetherContract.balanceOf(
+        liquidityProvider2
+      );
+      const afterLiquidityLockLP2 =
+        await liquidityLockerContract.liquidityLocks(liquitidyLockIDLP2);
+      const afterLiquidityLockerPairBalance2 = await pairContract.balanceOf(
+        liquidityLockerContract.address
+      );
+
+      expect(Number(afterBalanceDailyCOPLP1)).to.be.greaterThan(
+        Number(beforeBalanceDailyCOPLP1)
+      );
+      expect(beforeReserve0.sub(afterFirstRemovalReserve0)).to.equal(
+        afterBalanceDailyCOPLP1.sub(beforeBalanceDailyCOPLP1)
+      );
+      expect(Number(afterBalanceTetherLP1)).to.be.greaterThan(
+        Number(beforeBalanceTetherLP1)
+      );
+      expect(beforeReserve1.sub(afterFirstRemovalReserve1)).to.equal(
+        afterBalanceTetherLP1.sub(beforeBalanceTetherLP1)
+      );
+      expect(afterLiquidityLockLP1.liquidity).to.equal(0);
+      expect(afterLiquidityLockerPairBalance).to.equal(
+        beforeLiquidityLockerPairBalance.sub(beforeLiquidityLockLP1.liquidity)
+      );
+
+      expect(Number(afterBalanceDailyCOPLP2)).to.be.greaterThan(
+        Number(beforeBalanceDailyCOPLP2)
+      );
+      expect(
+        afterFirstRemovalReserve0.sub(afterSecondRemovalReserve0)
+      ).to.equal(afterBalanceDailyCOPLP2.sub(beforeBalanceDailyCOPLP2));
+      expect(Number(afterBalanceTetherLP2)).to.be.greaterThan(
+        Number(beforeBalanceTetherLP2)
+      );
+      expect(
+        afterFirstRemovalReserve1.sub(afterSecondRemovalReserve1)
+      ).to.equal(afterBalanceTetherLP2.sub(beforeBalanceTetherLP2));
+      expect(afterLiquidityLockLP2.liquidity).to.equal(0);
+      expect(afterLiquidityLockerPairBalance2).to.equal(
+        afterLiquidityLockerPairBalance.sub(beforeLiquidityLockLP2.liquidity)
+      );
+    });
+    it("Should be able to remove the liquidity in parts", async function () {
+      await ethers.provider.send("evm_mine", [unlocktimeLP1 + 1]);
+      const blockNumber = await ethers.provider.getBlockNumber();
+      const block = await ethers.provider.getBlock(blockNumber);
+      const deadline = block.timestamp + 60 * 20;
+      const liquidity: BigNumber = beforeLiquidityLockLP1.liquidity;
+      const liquidityPart: BigNumber = liquidity.div(2);
+      await liquidityLockerContract
+        .connect(liquidityProvider1Signer)
+        .unlockAndRemoveLiquidity(
+          liquitidyLockIDLP1,
+          liquidityPart,
+          { a: minAmountDLYCOP.div(2), b: minAmountTether.div(2) },
+          deadline
+        );
+      let afterFirstRemovalLiquidityLockLP1 =
+        await liquidityLockerContract.liquidityLocks(liquitidyLockIDLP1);
+      let afterFirstRemovalPairBalance = await pairContract.balanceOf(
+        liquidityLockerContract.address
+      );
+
+      const blockNumber2 = await ethers.provider.getBlockNumber();
+      const block2 = await ethers.provider.getBlock(blockNumber2);
+      const deadline2 = block2.timestamp + 60 * 20;
+      await liquidityLockerContract
+        .connect(liquidityProvider1Signer)
+        .unlockAndRemoveLiquidity(
+          liquitidyLockIDLP1,
+          afterFirstRemovalLiquidityLockLP1.liquidity,
+          { a: minAmountDLYCOP.div(2), b: minAmountTether.div(2) },
+          deadline2
+        );
+      let afterSecondRemovalLiquidityLockLP1 =
+        await liquidityLockerContract.liquidityLocks(liquitidyLockIDLP1);
+
+      expect(afterFirstRemovalLiquidityLockLP1.liquidity).to.equal(
+        beforeLiquidityLockLP1.liquidity.sub(liquidityPart)
+      );
+      expect(afterFirstRemovalPairBalance).to.equal(
+        beforeLiquidityLockerPairBalance.sub(liquidityPart)
+      );
+      expect(afterSecondRemovalLiquidityLockLP1.liquidity).to.equal(0);
+      expect(
+        await pairContract.balanceOf(liquidityLockerContract.address)
+      ).to.equal(beforeLiquidityLockerPairBalance.sub(liquidity));
     });
   });
 });

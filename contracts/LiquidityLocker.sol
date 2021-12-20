@@ -5,6 +5,7 @@ import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "./interfaces/IUniswapV2Router.sol";
+import "./interfaces/IUniswapV2Factory.sol";
 
 contract LiquidityLocker {
   using Counters for Counters.Counter;
@@ -98,10 +99,17 @@ contract LiquidityLocker {
       liquidityLock.provider == msg.sender,
       "Can only be removed by provider"
     );
-    require(liquidity > 0, "Liquidity amount negative");
     require(liquidityLock.liquidity >= liquidity, "Not enough left in lock");
 
     liquidityLock.liquidity -= liquidity;
+
+    IERC20 pair = IERC20(
+      IUniswapV2Factory(router.factory()).getPair(
+        address(liquidityLock.tokens.a),
+        address(liquidityLock.tokens.b)
+      )
+    );
+    pair.approve(address(router), liquidity);
 
     (amounts.a, amounts.b) = router.removeLiquidity(
       address(liquidityLock.tokens.a),
