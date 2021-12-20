@@ -83,7 +83,7 @@ contract LiquidityLocker {
     nrOfLiquidityLocks.increment();
   }
 
-  function unlockAndRemoveLiquidity(
+  function removeUnlockedLiquidity(
     uint256 liquidityLockID,
     uint256 liquidity,
     PairAmounts memory minAmounts,
