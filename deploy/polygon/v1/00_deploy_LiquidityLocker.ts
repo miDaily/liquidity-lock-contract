@@ -1,4 +1,5 @@
 import { DeployFunction } from "hardhat-deploy/types";
+import { abi as routerAbi } from "@uniswap/v2-periphery/build/UniswapV2Router02.json";
 
 const contractName = "LiquidityLocker";
 const version = "v1";
@@ -11,7 +12,7 @@ const func: DeployFunction = async function ({
   const { deploy } = deployments;
   const { deployer, uniswapV2Router } = await getNamedAccounts();
   let routerContract = uniswapV2Router
-    ? await ethers.getContractAt("UniswapV2Router02", uniswapV2Router)
+    ? await ethers.getContractAt(routerAbi, uniswapV2Router)
     : await ethers.getContract("UniswapV2Router02");
 
   await deploy(contractName, {
