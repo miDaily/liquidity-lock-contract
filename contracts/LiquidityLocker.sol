@@ -4,12 +4,13 @@ pragma solidity ^0.8.0;
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./interfaces/IUniswapV2Router.sol";
 import "./interfaces/IUniswapV2Factory.sol";
 
-// TODO: Add SafeERC20
 contract LiquidityLocker {
   using Counters for Counters.Counter;
+  using SafeERC20 for IERC20;
 
   struct Pair {
     IERC20 a;
@@ -63,10 +64,10 @@ contract LiquidityLocker {
   {
     require(unlocktime > block.timestamp, "Unlock time is before current time");
 
-    tokens.a.transferFrom(msg.sender, address(this), desiredAmounts.a);
-    tokens.b.transferFrom(msg.sender, address(this), desiredAmounts.b);
-    tokens.a.approve(address(router), desiredAmounts.a);
-    tokens.b.approve(address(router), desiredAmounts.b);
+    tokens.a.safeTransferFrom(msg.sender, address(this), desiredAmounts.a);
+    tokens.b.safeTransferFrom(msg.sender, address(this), desiredAmounts.b);
+    tokens.a.safeApprove(address(router), desiredAmounts.a);
+    tokens.b.safeApprove(address(router), desiredAmounts.b);
 
     liquidityAddition = _addLiquidityThroughRouter(
       tokens,
@@ -110,7 +111,7 @@ contract LiquidityLocker {
         address(liquidityLock.tokens.b)
       )
     );
-    pair.approve(address(router), liquidity);
+    pair.safeApprove(address(router), liquidity);
 
     (amounts.a, amounts.b) = router.removeLiquidity(
       address(liquidityLock.tokens.a),
