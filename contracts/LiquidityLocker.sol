@@ -45,6 +45,22 @@ contract LiquidityLocker {
     _;
   }
 
+  event LiquidityLocked(
+    uint256 lockId,
+    address indexed provider,
+    IERC20 indexed tokenA,
+    IERC20 indexed tokenB,
+    uint256 liquidity,
+    uint256 unlocktime
+  );
+  event LiquidityUnlocked(
+    uint256 lockId,
+    address indexed provider,
+    IERC20 indexed tokenA,
+    IERC20 indexed tokenB,
+    uint256 liquidity
+  );
+
   constructor(IUniswapV2Router _router) {
     router = _router;
   }
@@ -75,13 +91,24 @@ contract LiquidityLocker {
       deadline
     );
 
-    liquidityLocks[nrOfLiquidityLocks.current()] = LiquidityLock({
+    uint256 liquidityLockId = nrOfLiquidityLocks.current();
+    liquidityLocks[liquidityLockId] = LiquidityLock({
       tokens: Pair(tokens.a, tokens.b),
       liquidity: liquidityAddition.liquidity,
       unlocktime: unlocktime,
       provider: msg.sender
     });
     nrOfLiquidityLocks.increment();
+
+    // emit an event to be able to query all locked liquidity
+    emit LiquidityLocked(
+      liquidityLockId,
+      msg.sender,
+      tokens.a,
+      tokens.b,
+      liquidityAddition.liquidity,
+      unlocktime
+    );
   }
 
   function removeUnlockedLiquidity(
@@ -120,6 +147,15 @@ contract LiquidityLocker {
       minAmounts.b,
       msg.sender,
       deadline
+    );
+
+    // Emit event to query unlock liquidity
+    emit LiquidityUnlocked(
+      liquidityLockID,
+      msg.sender,
+      liquidityLock.tokens.a,
+      liquidityLock.tokens.b,
+      liquidity
     );
   }
 

@@ -269,6 +269,31 @@ describe("LiquidityLocker", function () {
         liquitidyLockID + 1
       );
     });
+    it("Should emit the LiquidityLocked event", async function () {
+      liquitidyLockID = Number(
+        await liquidityLockerContract.nrOfLiquidityLocks()
+      );
+      await dailyCopContract
+        .connect(liquidityProvider1Signer)
+        .approve(liquidityLockerContract.address, initialAmountDailyCOPLP1);
+      await tetherContract
+        .connect(liquidityProvider1Signer)
+        .approve(liquidityLockerContract.address, initialAmountTetherLP1);
+      await expect(
+        liquidityLockerContract
+          .connect(liquidityProvider1Signer)
+          .addAndLockLiquidity(
+            {
+              a: dailyCopContract.address,
+              b: tetherContract.address,
+            },
+            { a: desiredAmountDLYCOPLP1, b: desiredAmountTetherLP1 },
+            { a: minAmountDLYCOPLP1, b: minAmountTetherLP1 },
+            deadline,
+            unlocktime
+          )
+      ).to.emit(liquidityLockerContract, "LiquidityLocked");
+    });
   });
 
   describe("Remove Liquidity", async () => {

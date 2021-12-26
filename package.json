@@ -8,7 +8,9 @@
     "hh-test": "hardhat test",
     "hh-deploy": "hardhat deploy",
     "hh-deploy-network": "hardhat deploy --network",
-    "hh-add-liquidity-network": "hardhat add-liquidity --network"
+    "hh-add-liquidity-network": "hardhat add-liquidity --network",
+    "hh-get-liquidity-network": "hardhat get-liquidity --network",
+    "hh-remove-liquidity-network": "hardhat remove-liquidity --network"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "npm:hardhat-deploy-ethers",
@@ -48,6 +50,7 @@
     "@ethersproject/hardware-wallets": "^5.5.0",
     "@openzeppelin/contracts": "^4.4.1",
     "@uniswap/v2-core": "^1.0.1",
-    "@uniswap/v2-periphery": "^1.1.0-beta.0"
+    "@uniswap/v2-periphery": "^1.1.0-beta.0",
+    "readline": "^1.3.0"
   }
 }

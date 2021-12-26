@@ -4,8 +4,12 @@ import { LedgerSigner } from "@anders-t/ethers-ledger";
 import { abi as erc20Abi } from "@openzeppelin/contracts/build/contracts/ERC20.json";
 import { abi as factoryAbi } from "@uniswap/v2-core/build/UniswapV2Factory.json";
 import { abi as pairAbi } from "@uniswap/v2-core/build/UniswapV2Pair.json";
+import { LiquidityLocker, ERC20 } from "../typechain";
 
-// yarn hh-add-liquidity-network polygon --token-a 0x1659fFb2d40DfB1671Ac226A0D9Dcc95A774521A --token-b 0xc2132d05d31c914a87c6611c10748aeb04b58e8f --amount-token-a 4000 --lock-duration 300
+// DLYCOP/USDT:
+// yarn hh-add-liquidity-network polygon --token-a 0x1659fFb2d40DfB1671Ac226A0D9Dcc95A774521A --token-b 0xc2132d05d31c914a87c6611c10748aeb04b58e8f --amount-token-a 60000 --lock-duration 120
+// DLYCOP/WBTC
+// yarn hh-add-liquidity-network polygon --token-a 0x1659fFb2d40DfB1671Ac226A0D9Dcc95A774521A --token-b 0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6 --amount-token-a 60000 --lock-duration 1800
 task(
   "add-liquidity",
   "Add and lock liquidity",
@@ -22,9 +26,17 @@ task(
     const { ethers, getNamedAccounts } = hre;
     const addresses = await getNamedAccounts();
     // Get all contracts
-    const tokenAContract = await ethers.getContractAt(erc20Abi, args.tokenA);
-    const tokenBContract = await ethers.getContractAt(erc20Abi, args.tokenB);
-    const liquidityLockerContract = await ethers.getContract("LiquidityLocker");
+    const tokenAContract: ERC20 = await ethers.getContractAt(
+      erc20Abi,
+      args.tokenA
+    );
+    const tokenBContract: ERC20 = await ethers.getContractAt(
+      erc20Abi,
+      args.tokenB
+    );
+    const liquidityLockerContract: LiquidityLocker = await ethers.getContract(
+      "LiquidityLocker"
+    );
     const factoryContract = await ethers.getContractAt(
       factoryAbi,
       addresses["uniswapV2Factory"]
@@ -34,8 +46,8 @@ task(
       factoryContract.getPair(tokenAContract.address, tokenBContract.address)
     );
     // Calculate the amount of token B for the amount of token A at the current price
-    const decimalsTokenA = await tokenAContract.decimals();
-    const decimalsTokenB = await tokenBContract.decimals();
+    const decimalsTokenA = (await tokenAContract.decimals()) || MAX_DECIMALS;
+    const decimalsTokenB = (await tokenBContract.decimals()) || MAX_DECIMALS;
     const reserves = await pairContract.getReserves();
     const reserveTokenA = Number(
       reserves._reserve0.mul(10 ** (MAX_DECIMALS - decimalsTokenA))
@@ -62,57 +74,52 @@ task(
       decimalsTokenA
     );
     const minAmountTokenB = ethers.utils.parseUnits(
-      ((1 - slippageTolerance) * amountTokenB).toFixed(6),
+      ((1 - slippageTolerance) * amountTokenB).toFixed(decimalsTokenB),
       decimalsTokenB
     );
-    console.log("minAmountTokenA", Number(minAmountTokenA));
-    console.log("minAmountTokenB", Number(minAmountTokenB));
-    // Calculate 5 minutes deadline
+    // Calculate 15 minutes deadline
     const blockNumber = await ethers.provider.getBlockNumber();
     const block = await ethers.provider.getBlock(blockNumber);
     const deadline = block.timestamp + 15 * 60;
     // Calculate the timestamp of when the liquidity should be unlocked
     const unlockTime = block.timestamp + Number(args.lockDuration);
 
-    console.log("DesiredAmountA", Number(desiredAmountTokenA));
-    console.log("DesiredAmountB", Number(desiredAmountTokenB));
-    console.log("MinAmountA", Number(minAmountTokenA));
-    console.log("MinAmountB", Number(minAmountTokenB));
-    console.log("Deadline", deadline);
-    console.log("UnlockTime", unlockTime);
+    console.log(
+      "DesiredAmountA",
+      ethers.utils.formatUnits(desiredAmountTokenA, decimalsTokenA)
+    );
+    console.log(
+      "DesiredAmountB",
+      ethers.utils.formatUnits(desiredAmountTokenB, decimalsTokenB)
+    );
+    console.log(
+      "MinAmountA",
+      ethers.utils.formatUnits(minAmountTokenA, decimalsTokenA)
+    );
+    console.log(
+      "MinAmountB",
+      ethers.utils.formatUnits(minAmountTokenB, decimalsTokenB)
+    );
+    console.log("Deadline", new Date(deadline * 1000));
+    console.log("UnlockTime", new Date(unlockTime * 1000));
 
     // Use a Ledger as the signer
     const path = `m/44'/60'/0'/0/0`;
     const signer = new LedgerSigner(ethers.provider, path);
-    const address = await signer.getAddress();
-    console.log("Ledger address", address);
-    console.log("LL contract", liquidityLockerContract);
-    console.log("Liquidity Locker address", liquidityLockerContract.address);
+    console.log("Ledger signer address", await signer.getAddress());
 
     // Approve the desired amounts
-    await tokenAContract
+    const txApproveA = await tokenAContract
       .connect(signer)
       .approve(liquidityLockerContract.address, desiredAmountTokenA);
-    console.log(
-      "Approved A",
-      await tokenAContract.allowance(
-        await signer.getAddress(),
-        liquidityLockerContract.address
-      )
-    );
-    await tokenBContract
+    await txApproveA.wait(2);
+    const txApproveB = await tokenBContract
       .connect(signer)
       .approve(liquidityLockerContract.address, desiredAmountTokenB);
-    console.log(
-      "Approved B",
-      await tokenBContract.allowance(
-        await signer.getAddress(),
-        liquidityLockerContract.address
-      )
-    );
+    await txApproveB.wait(2);
 
     // Add the liquidity
-    await liquidityLockerContract
+    const tx = await liquidityLockerContract
       .connect(signer)
       .addAndLockLiquidity(
         { a: args.tokenA, b: args.tokenB },
@@ -121,6 +128,8 @@ task(
         deadline,
         unlockTime
       );
+
+    console.log("TX receipt", await tx.wait(2));
   }
 )
   .addParam("tokenA", "The first token of the pair")
