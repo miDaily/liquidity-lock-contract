@@ -81,8 +81,8 @@ contract LiquidityLocker {
 
     tokens.a.safeTransferFrom(msg.sender, address(this), desiredAmounts.a);
     tokens.b.safeTransferFrom(msg.sender, address(this), desiredAmounts.b);
-    tokens.a.safeApprove(address(router), desiredAmounts.a);
-    tokens.b.safeApprove(address(router), desiredAmounts.b);
+    tokens.a.safeIncreaseAllowance(address(router), desiredAmounts.a);
+    tokens.b.safeIncreaseAllowance(address(router), desiredAmounts.b);
 
     liquidityAddition = _addLiquidityThroughRouter(
       tokens,
@@ -99,6 +99,22 @@ contract LiquidityLocker {
       provider: msg.sender
     });
     nrOfLiquidityLocks.increment();
+
+    if (desiredAmounts.a - liquidityAddition.tokenAmounts.a > 0) {
+      tokens.a.safeTransferFrom(
+        address(this),
+        msg.sender,
+        desiredAmounts.a - liquidityAddition.tokenAmounts.a
+      );
+    }
+
+    if (desiredAmounts.b - liquidityAddition.tokenAmounts.b > 0) {
+      tokens.b.safeTransferFrom(
+        address(this),
+        msg.sender,
+        desiredAmounts.b - liquidityAddition.tokenAmounts.b
+      );
+    }
 
     // emit an event to be able to query all locked liquidity
     emit LiquidityLocked(
@@ -137,7 +153,7 @@ contract LiquidityLocker {
         address(liquidityLock.tokens.b)
       )
     );
-    pair.safeApprove(address(router), liquidity);
+    pair.safeIncreaseAllowance(address(router), liquidity);
 
     (amounts.a, amounts.b) = router.removeLiquidity(
       address(liquidityLock.tokens.a),

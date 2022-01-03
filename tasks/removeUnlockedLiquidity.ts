@@ -6,7 +6,7 @@ import { abi as factoryAbi } from "@uniswap/v2-core/build/UniswapV2Factory.json"
 import { abi as pairAbi } from "@uniswap/v2-core/build/UniswapV2Pair.json";
 import { LiquidityLocker } from "../typechain";
 
-// yarn hh-remove-liquidity-network polygon --lock-id 2 --liquidity 0.000790885634063788
+// yarn hh-remove-liquidity-network polygon --lock-id 0 --liquidity 0.000795897317737847
 task(
   "remove-liquidity",
   "Remove and get liquidity",
@@ -83,10 +83,15 @@ task(
       "minAmountTokenB",
       ethers.utils.formatUnits(minAmountTokenB, decimalsTokenB)
     );
+
     // Calculate 15 minutes deadline
     const blockNumber = await ethers.provider.getBlockNumber();
     const block = await ethers.provider.getBlock(blockNumber);
     const deadline = block.timestamp + 15 * 60;
+
+    console.log("minAmountTokenA", minAmountTokenA.toString());
+    console.log("minAmountTokenB", minAmountTokenB.toString());
+    console.log("deadline", deadline);
 
     // Use a Ledger as the signer
     const path = `m/44'/60'/0'/0/0`;
