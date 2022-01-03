@@ -101,16 +101,14 @@ contract LiquidityLocker {
     nrOfLiquidityLocks.increment();
 
     if (desiredAmounts.a - liquidityAddition.tokenAmounts.a > 0) {
-      tokens.a.safeTransferFrom(
-        address(this),
+      tokens.a.safeTransfer(
         msg.sender,
         desiredAmounts.a - liquidityAddition.tokenAmounts.a
       );
     }
 
     if (desiredAmounts.b - liquidityAddition.tokenAmounts.b > 0) {
-      tokens.b.safeTransferFrom(
-        address(this),
+      tokens.b.safeTransfer(
         msg.sender,
         desiredAmounts.b - liquidityAddition.tokenAmounts.b
       );
