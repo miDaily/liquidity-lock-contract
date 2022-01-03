@@ -6,7 +6,7 @@ import { abi as factoryAbi } from "@uniswap/v2-core/build/UniswapV2Factory.json"
 import { abi as pairAbi } from "@uniswap/v2-core/build/UniswapV2Pair.json";
 import { LiquidityLocker } from "../typechain";
 
-// yarn hh-remove-liquidity-network polygon --lock-id 0 --liquidity 0.000795897317737847
+// yarn hh-remove-liquidity-network polygon --lock-id 2 --liquidity 0.000663247782155659
 task(
   "remove-liquidity",
   "Remove and get liquidity",
@@ -108,7 +108,8 @@ task(
         deadline
       );
 
-    console.log("Tx receipt", await tx.wait(2));
+    console.log("Tx hash", tx.hash);
+    console.log("Tx confirmed", (await tx.wait(1)).confirmations);
   }
 )
   .addParam("lockId", "The ID of the lock to remove the liquidity from")

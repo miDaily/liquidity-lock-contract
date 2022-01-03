@@ -7,7 +7,7 @@ import { abi as pairAbi } from "@uniswap/v2-core/build/UniswapV2Pair.json";
 import { LiquidityLocker, ERC20 } from "../typechain";
 
 // DLYCOP/USDT:
-// yarn hh-add-liquidity-network polygon --token-a 0x1659fFb2d40DfB1671Ac226A0D9Dcc95A774521A --token-b 0xc2132d05d31c914a87c6611c10748aeb04b58e8f --amount-token-a 60000 --lock-duration 600
+// yarn hh-add-liquidity-network polygon --token-a 0x1659fFb2d40DfB1671Ac226A0D9Dcc95A774521A --token-b 0xc2132d05d31c914a87c6611c10748aeb04b58e8f --amount-token-a 60000 --lock-duration 3600
 // DLYCOP/WBTC
 // yarn hh-add-liquidity-network polygon --token-a 0x1659fFb2d40DfB1671Ac226A0D9Dcc95A774521A --token-b 0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6 --amount-token-a 60000 --lock-duration 1800
 task(
@@ -125,6 +125,7 @@ task(
       const txApproveA = await tokenAContract
         .connect(signer)
         .approve(liquidityLockerContract.address, desiredAmountTokenA);
+      console.log("approvement A", txApproveA.hash);
       await txApproveA.wait(2);
     }
 
@@ -137,6 +138,7 @@ task(
       const txApproveB = await tokenBContract
         .connect(signer)
         .approve(liquidityLockerContract.address, desiredAmountTokenB);
+      console.log("approvement B", txApproveB.hash);
       await txApproveB.wait(2);
     }
 
@@ -151,7 +153,8 @@ task(
         unlockTime
       );
 
-    console.log("TX receipt", await tx.wait(2));
+    console.log("Tx hash", tx.hash);
+    console.log("Tx confirmed", (await tx.wait(1)).confirmations);
   }
 )
   .addParam("tokenA", "The first token of the pair")
