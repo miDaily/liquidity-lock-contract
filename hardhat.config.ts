@@ -16,6 +16,7 @@ dotenv.config();
 // https://hardhat.org/guides/create-task.html
 import "./tasks/addAndLockLiquidity";
 import "./tasks/removeUnlockedLiquidity";
+import "./tasks/getLiquidityLocksOfProvider";
 
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more

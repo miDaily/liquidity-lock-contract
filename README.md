@@ -38,7 +38,7 @@ hardhat run --network ropsten scripts/sample-script.ts
 Then, copy the deployment address and paste it in to replace `DEPLOYED_CONTRACT_ADDRESS` in this command:
 
 ```shell
-npx hardhat verify --network ropsten DEPLOYED_CONTRACT_ADDRESS "Hello, Hardhat!"
+npx hardhat verify --network polygon 0x4741F8532F9b175CA7ceD756DfEd4A9b53Db812D "0xa5E0829CaCEd8fFDD4De3c43696c57F7D7A678ff"
 ```
 
 # Performance optimizations

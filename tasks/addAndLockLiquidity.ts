@@ -7,7 +7,7 @@ import { abi as pairAbi } from "@uniswap/v2-core/build/UniswapV2Pair.json";
 import { LiquidityLocker, ERC20 } from "../typechain";
 
 // DLYCOP/USDT:
-// yarn hh-add-liquidity-network polygon --token-a 0x1659fFb2d40DfB1671Ac226A0D9Dcc95A774521A --token-b 0xc2132d05d31c914a87c6611c10748aeb04b58e8f --amount-token-a 60000 --lock-duration 120
+// yarn hh-add-liquidity-network polygon --token-a 0x1659fFb2d40DfB1671Ac226A0D9Dcc95A774521A --token-b 0xc2132d05d31c914a87c6611c10748aeb04b58e8f --amount-token-a 60000 --lock-duration 3600
 // DLYCOP/WBTC
 // yarn hh-add-liquidity-network polygon --token-a 0x1659fFb2d40DfB1671Ac226A0D9Dcc95A774521A --token-b 0x1bfd67037b42cf73acf2047067bd4f2c47d9bfd6 --amount-token-a 60000 --lock-duration 1800
 task(
@@ -103,20 +103,44 @@ task(
     console.log("Deadline", new Date(deadline * 1000));
     console.log("UnlockTime", new Date(unlockTime * 1000));
 
+    console.log("DesiredAmountA", desiredAmountTokenA.toString());
+    console.log("DesiredAmountB", desiredAmountTokenB.toString());
+    console.log("MinAmountA", minAmountTokenA.toString());
+    console.log("MinAmountB", minAmountTokenB.toString());
+    console.log("Deadline", deadline);
+    console.log("UnlockTime", unlockTime);
+
     // Use a Ledger as the signer
-    const path = `m/44'/60'/0'/0/0`;
-    const signer = new LedgerSigner(ethers.provider, path);
-    console.log("Ledger signer address", await signer.getAddress());
+    const signer = new LedgerSigner(ethers.provider);
+    const signerAddress = await signer.getAddress();
+    console.log("Ledger signer address", signerAddress);
 
     // Approve the desired amounts
-    const txApproveA = await tokenAContract
-      .connect(signer)
-      .approve(liquidityLockerContract.address, desiredAmountTokenA);
-    await txApproveA.wait(2);
-    const txApproveB = await tokenBContract
-      .connect(signer)
-      .approve(liquidityLockerContract.address, desiredAmountTokenB);
-    await txApproveB.wait(2);
+    if (
+      (await tokenAContract.allowance(
+        signerAddress,
+        liquidityLockerContract.address
+      )) < desiredAmountTokenA
+    ) {
+      const txApproveA = await tokenAContract
+        .connect(signer)
+        .approve(liquidityLockerContract.address, desiredAmountTokenA);
+      console.log("approvement A", txApproveA.hash);
+      await txApproveA.wait(2);
+    }
+
+    if (
+      (await tokenBContract.allowance(
+        signerAddress,
+        liquidityLockerContract.address
+      )) < desiredAmountTokenB
+    ) {
+      const txApproveB = await tokenBContract
+        .connect(signer)
+        .approve(liquidityLockerContract.address, desiredAmountTokenB);
+      console.log("approvement B", txApproveB.hash);
+      await txApproveB.wait(2);
+    }
 
     // Add the liquidity
     const tx = await liquidityLockerContract
@@ -129,7 +153,8 @@ task(
         unlockTime
       );
 
-    console.log("TX receipt", await tx.wait(2));
+    console.log("Tx hash", tx.hash);
+    console.log("Tx confirmed", (await tx.wait(1)).confirmations);
   }
 )
   .addParam("tokenA", "The first token of the pair")
